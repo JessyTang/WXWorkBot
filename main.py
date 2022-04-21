@@ -1,7 +1,15 @@
-# This is a sample Python script.
+import json
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+
+def readFromFile(filename):
+    try:
+        file = open(filename, 'r')
+    except FileNotFoundError as e:
+        print(e)
+    else:
+        info = json.load(file)
+        file.close()
+        return info
 
 
 def print_hi(name):

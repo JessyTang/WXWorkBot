@@ -6,21 +6,13 @@ from wxworkerror import *
 
 
 class WXWork:
-    def __init__(self):
-        self.__filename = 'account.json'
+    def __init__(self, agentid, corpid, corpsecret, user):
         self.__expiretime = time.time()
-        try:
-            file = open(self.__filename, 'r')
-        except FileNotFoundError as e:
-            print(e)
-        else:
-            info = json.load(file)
-            self.__agentid = info['agentid']
-            self.__corpid = info['corpid']
-            self.__corpsecret = info['corpsecret']
-            self.__user = info['user']
-        finally:
-            file.close()
+        self.__agentid = agentid
+        self.__corpid = corpid
+        self.__corpsecret = corpsecret
+        self.__user = user
+        self.__refreshAccessToken()
 
     def __refreshAccessToken(self):
         url = 'https://qyapi.weixin.qq.com/cgi-bin/gettoken'
@@ -45,7 +37,7 @@ class WXWork:
             except WXWorkError as e:
                 print(e)
 
-    def __uploadMediaFile(self, filetype, filename):
+    def __uploadMediaFile(self, filename, filetype):
         self.__getAccessToken()
         url = 'https://qyapi.weixin.qq.com/cgi-bin/media/upload'
         params = {
@@ -82,10 +74,44 @@ class WXWork:
             raise WXWorkError(respond['errcode'], respond['errmsg'])
 
     def sendMedia(self, filename, filetype):
-        pass
+        media_id = self.__uploadMediaFile(filename, filetype)
+        self.__getAccessToken()
+        url = 'https://qyapi.weixin.qq.com/cgi-bin/message/send'
+        params = {
+            'access_token': self.__accessToken
+        }
+        body = {
+            'touser': self.__user,
+            'msgtype': filetype,
+            'agentid': self.__agentid,
+            filetype: {
+                'content': media_id
+            },
+        }
+        req = requests.post(url, json=body, params=params)
+        respond = json.loads(req.text)
+        if respond['errcode'] != 0:
+            raise WXWorkError(respond['errcode'], respond['errmsg'])
 
-
+    def sendTextCard(self, textcard):
+        self.__getAccessToken()
+        url = 'https://qyapi.weixin.qq.com/cgi-bin/message/send'
+        params = {
+            'access_token': self.__accessToken
+        }
+        body = {
+            'touser': self.__user,
+            'msgtype': 'textcard',
+            'agentid': self.__agentid,
+            'textcard': {
+                'content': textcard
+            },
+        }
+        req = requests.post(url, json=body, params=params)
+        respond = json.loads(req.text)
+        if respond['errcode'] != 0:
+            raise WXWorkError(respond['errcode'], respond['errmsg'])
 
 
 if __name__ == '__main__':
-    print()
+    print('hello world.')
